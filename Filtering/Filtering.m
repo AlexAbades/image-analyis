@@ -258,49 +258,75 @@ fspecdisk = fspecial('disk', 5);
 fspecgaus = fspecial('gaussian', 5);
 
 %% Edge detection 
-
+%{ 
+We can create special filters to detect the different edges on a image. We
+can use the same filter of prewitt or sobel transposed or with the sign
+changed
+%}
 
 sobelf = fspecial('prewitt');
 prewitf = fspecial('sobel');
 
 % Read the image
 CT = imread('ElbowCTSlice.png');
+
+% Apply some filters 
+CTSH = imfilter(CT, sobelf); % Horizontal detection 
+CTPH = imfilter(CT, prewitf); % Horizontal detection 
+
+% Rotates the kernel 90 degrees
+CTSV = imfilter(CT, sobelf'); % Vertical detection 
+CTPV = imfilter(CT, prewitf'); % Vertical detection 
+
+% Rotates 
+CTSD = imfilter(CT, -sobelf); % Diagonal detection 
+CTPD = imfilter(CT, -prewitf); % Diagonal detection 
+
+
+% Check the normal image and some of the filters specifying gray filter or
+% non gray filter
 figure 
+subplot(1,3,1)
 imshow(CT)
 title('Original Image')
 
-CTSH = imfilter(CT, sobelf);
-CTPH = imfilter(CT, prewitf);
-CTSV = imfilter(CT, sobelf');
-CTPV = imfilter(CT, prewitf');
+subplot(1,3,2)
+imshow(CTSH);
+title('Filtered Image Sobel horitzontal normal cmap')
+
+subplot(1,3,3)
+imshow(CTSH, []);
+title('Filtered Image Sobel horitzontal gray cmap ')
+% where the [] makes the command scale the gray values automatically
+
+% Chec all the different filters so we can understand which edges are
+% detecting.
 
 figure
 subplot(2,3,1)
-imshow(CTSH);
-title('Filtered Image Sobel horitzontal cmap normal')
+imshow(CTSH, []);
+ylabel('Sobel Filter')
 
 subplot(2,3,2)
-imshow(CTSH,[]);
-title('Filtered Image Sobel horitzontal cmap gray')
-% where the [] makes the command scale the gray values automatically
+imshow(CTSV, []);
 
 subplot(2,3,3)
-imshow(CTSV,[]);
-title('Filtered Image Sobel vertical cmap gray')
+imshow(CTSD,[]);
 
 subplot(2,3,4)
-imshow(CTPH);
-title('Filtered Image Prewitt horitzontal cmap normal')
+imshow(CTPH, []);
+ylabel('Prewitt filter')
+xlabel('Horizontal detection')
 
 subplot(2,3,5)
-imshow(CTPH,[]);
-title('Filtered Image Prewitt horitzontal cmap gray')
+imshow(CTPV,[]);
+xlabel('Vertical detection')
 
 subplot(2,3,6)
-imshow(CTSV,[]);
-title('Filtered Image Prewitt vertical cmap gray')
+imshow(CTSD,[]);
+xlabel('Diagonal Detection')
 
-% change the cmaps 
+% Change the cmaps 
 figure
 subplot(1,3,1) 
 imshow(CTPH, [])
@@ -315,13 +341,6 @@ imshow(CTPH,colormap(gca, hot));
 title('Filtered Image Prewitt horitzontal cmap hot')
 
 
-
-CTPV = imfilter(CT, -prewitf');
-figure
-imshow(CTPV, [])
-
-
-
 % Probe to apply horizontal filter and vertical.
 CTPHV = imfilter(CTPH, prewitf');
 
@@ -330,6 +349,190 @@ imshow(CTPHV)
 title('Probe of double filter')
 % Doesn't work
 
+%% Exercise 15 
+% mean kernel and edge detection
+
+h1 = fspecial('average', 5);
+h2 = fspecial('average', 13);
+
+CT1 = imfilter(CT, h1);
+CT2 = imfilter(CT, h2);
+
+% Visualize the different kernels 
+figure
+subplot(1,2,1);
+imshow(CT1);
+title(' 5 by 5 dimension');
+
+subplot(1,2,2)
+imshow(CT2);
+title('13 by 13 dimension');
+sgtitle('Mean Kernel filter');
+
+% Apply the edge detection after the kernel filter
+edgeP = fspecial('prewitt');
+CT1f = imfilter(CT1, edgeP);
+
+subplot(1,2,1)
+imshow(CT1f)
+title('edge detection AFTER the kernel filter');
+
+% Apply edge detection before kernel filter 
+CT1e = imfilter(CT, edgeP);
+CT1f = imfilter(CT1e, h1);
+subplot(1,2,2);
+imshow(CT1f)
+title('Edge detection BEFORE the kernel filter')
+% ORDER DOESN'T AFFECT THE RESULT 
+
+% Check the differences between the to kernels
+CT2f = imfilter(CT2, edgeP);
+
+subplot(1,2,1); 
+imshow(CT1f) 
+title('5 by 5 Mean kernel')
+
+subplot(1,2,2);
+imshow(CT2f);
+title('13 by 13 Mean kernel');
+sgtitle('Edge detection AFTER the mean kernel')
+
+%% Exercise 16
+% median filter and edge detection 
+
+CT1medf = medfilt2(CT, [5 5]);
+CT2medf = medfilt2(CT, [13 13]);
+
+edgeP = fspecial('prewitt');
+CT1medfe = imfilter(CT1medf, edgeP);
+CT2medfe = imfilter(CT2medf, edgeP);
+
+figure
+subplot(1,2,1);
+imshow(CT1medfe);
+title('5 by 5 filter');
+
+subplot(1,2,2)
+imshow(CT2medfe);
+title('13 by 13 filter');
+sgtitle('Median filter');
+
+% Chek rotating the edges kernels 
+CT1medfev = imfilter(CT1medf, edgeP');
+CT2medfev = imfilter(CT2medf, edgeP');
+CT1medfed = imfilter(CT1medf, -edgeP);
+CT2medfed = imfilter(CT2medf, -edgeP);
+
+subplot(2,3,1)
+imshow(CT1medfe);
+ylabel('5 by 5 kernel')
+
+subplot(2,3,2)
+imshow(CT1medfev);
+
+subplot(2,3,3)
+imshow(CT1medfed);
+
+subplot(2,3,4)
+imshow(CT2medfe);
+ylabel('13 by 13 kernel')
+xlabel('Normal kernel')
+
+subplot(2,3,5)
+imshow(CT2medfev);
+xlabel('90º roatation')
+
+subplot(2,3,6)
+imshow(CT2medfed);
+xlabel('-90º rotation')
+sgtitle('Median kernel before edge detection')
+
+%% Gaussian Filtering 
+%  Removes high frequencies from the image.
+
+hsize = 17;
+sigma = 3;
+
+G = fspecial('gaussian', hsize, sigma);
+figure
+surf(G)
+
+% Check the image with the Gaussian filter 
+CTG = imfilter(CT, G);
+figure
+imshow(CTG)
+
+s2 = 3;
+s3 = 11;
+hsize3 = 51;
+
+G2 = fspecial('gaussian', hsize, s2);
+G3 = fspecial('gaussian', hsize3, s3);
+
+CTG2 = imfilter(CT, G2);
+CTG3 = imfilter(CT, G3);
+
+subplot(1,3,1)
+imshow(CTG)
+title('Sigma = 1, hsize = 17'); 
+
+subplot(1,3,2)
+imshow(CTG2)
+title('Sigma = 3, hsize = 517');
+
+subplot(1,3,3)
+imshow(CTG3)
+title('Sigma = 11, hsize = 51');
+
+
+%% Own images 
+A = imread('alex.jpeg');
+
+% Convert the image into a gray scale
+Ag = rgb2gray(A); 
+
+% Reshape the image 
+Ar = imresize(Ag, [1000 NaN]);
+
+% Show image 
+imshow(Ar);
+
+% Create some filters 
+h1 = fspecial('average', 5) ;
+A1 = imfilter(Ar, h1);
+
+% Edge detection 
+p = fspecial('prewitt');
+s = fspecial('sobel');
+g = fspecial('gaussian', 17, 3);
+
+Ap = imfilter(Ar, p);
+As = imfilter(Ar, s');
+Ag = imfilter(Ar, g);
+
+subplot(1,3,1)
+imshow(Ap);
+title('Prewitt filter');
+
+subplot(1,3,2)
+imshow(As);
+title('Sobel filter 90º Roateted');
+
+subplot(1,3,3);
+imshow(Ag);
+title('Gauusian filter');
+sgtitle('Kernel filters') 
+
+% Apply edge detection before appling gaussian kernel 
+A = imfilter(Ag, p);
+figure
+subplot(1,2,1)
+imshow(A);
+title('Gaussian kernel + edge detection')
+
+subplot(1,2,2)
+imshow(Ap)
+title('Prewitt edge detection')
 
 
 
